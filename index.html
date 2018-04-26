@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>React Table</title>
+    <script src="./react.js"></script>
+    <script src="./moment.js"></script>
+    <script src="./JSXTransformer.js"></script>
+
+    <style>
+    table {
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid black;
+    font-family: calibri;
+    text-align: center;
+    color: black;
+}
+    </style>
+</head>
+
+<body>
+    <div id="divContent"></div>
+    <script>
+    let actualData = [
+      {'task':'Task-1','resource':['John','Jimmy'],'start':'25-08-15','end':'25-9-15','utilization':50},
+      {'task':'Task-2','resource':['John','Jimmy'],'start':'21-09-15','end':'30-9-15','utilization':50},
+      {'task':'Task-3','resource':['John'],'start':'26-08-15','end':'2-9-15','utilization':50},
+      {'task':'Task-4','resource':['Sara'],'start':'14-09-15','end':'2-10-15','utilization':100},
+      {'task':'Task-5','resource':['HG','HB'],'start':'10-09-15','end':'14-10-15','utilization':50},
+      {'task':'Task-6','resource':['HG'],'start':'10-09-15','end':'21-09-15','utilization':50}
+    ]
+    let myData = {}
+    function addToMyData(obj){
+      let taskName = obj.task
+
+
+      for(resource of obj.resource){
+        if(!myData[resource]){
+          myData[resource] = {taskMap: {}, name: resource}
+
+        }
+        myData[resource]['taskMap'][taskName] = obj
+
+      }
+    }
+    for(a of actualData){
+        addToMyData(a)
+    }
+
+    </script>
+    <script type="text/jsx">
+      /**
+       * @jsx React.DOM
+       */
+
+      let Resource =  React.createClass({
+           mainRow(){
+             return <tr><td><b>{this.props.resource.name}</b></td></tr>
+
+           },
+           render() {
+
+             let resource = this.props.resource
+             console.log(resource)
+             let mapper = {}
+             let taskMap = resource.taskMap
+             console.log(taskMap)
+
+             let startDate = moment(this.props.startDate, 'DD-MM-YY')
+
+             let endDate = moment(this.props.endDate, 'DD-MM-YY')
+
+             for(let taskKey in taskMap){
+               mapper[taskKey] = {columns: [],
+                 startDate: moment(taskMap[taskKey].start, 'DD-MM-YY'),
+                 endDate: moment(taskMap[taskKey].end, 'DD-MM-YY')
+               }
+             }
+             let mainColumn = []
+             while (startDate <= endDate) {
+               let sum = 0, i = 0
+               for(let taskKey in taskMap){
+
+                 let amount = startDate.isBetween(mapper[taskKey].startDate, mapper[taskKey].endDate, "", true)? 4:0
+                 sum+=amount
+                 mapper[taskKey].columns.push(<td key={startDate.unix()}>{amount}</td>)
+               }
+               mainColumn.push(<td key={startDate.unix()}>{sum}</td>)
+               startDate = startDate.add(1, 'days')
+             }
+             let taskRowList = []
+             for(taskKey in mapper){
+               taskRowList.push(<tr key={taskKey}><td>{taskKey}</td>{mapper[taskKey].columns}</tr>)
+             }
+
+             return <div><tr><td><b>{resource.name}</b></td>{mainColumn}</tr>{taskRowList}</div>;
+           }
+       })
+       var SampleReact = React.createClass({
+       render: function(){
+
+         let resourceList = []
+         let mainColumnList = []
+         let startDate = moment(this.props.startDate, 'DD-MM-YY')
+         let endDate = moment(this.props.endDate, 'DD-MM-YY')
+         while (startDate <= endDate) {
+           mainColumnList.push(<th key={startDate.format("DD MMM")}>{startDate.format('DD MMM')}</th>)
+           startDate = startDate.add(1, 'days')
+         }
+         for(let resource in myData){
+           resourceList.push(<Resource key={resource} resource={myData[resource]}  startDate={this.props.startDate} endDate={this.props.endDate}/>)
+         }
+
+         return  <table>
+               <thead>
+               <th>Name</th>
+               {mainColumnList}
+               </thead>
+               {resourceList}
+             </table>
+
+       }
+     });
+
+      React.renderComponent(
+        <SampleReact startDate={'25-08-15'} endDate={'14-10-15'} />,
+        document.getElementById('divContent')
+      );
+    </script>
+</body>
+
+</html>
